@@ -1,15 +1,15 @@
-// #include <Arduino.h>
+#include <Arduino.h>
 
-// #ifndef COMMS_H
-// #define COMMS_H
+#ifndef COMMS_H
+#define COMMS_H
 
-// class COMMS{
+class COMMS{
 
-// 	public:
-// 		COMMS();
-// 		void read_packet(byte*);
-// 		void send_packet(byte*);
-// 		void pretty_print_buffer(byte*);
-// };
+	public:
+		COMMS();
+		void read_packet(byte*);
+		void send_packet(byte*);
+		void send_floats(String, float*, int);
+};
 
-// #endif
+#endif

@@ -4,61 +4,14 @@ IMU_9DOF::IMU_9DOF() {
 	/*
 		Set up the jawns and the jimmys, config is hardcoded atm
 		but that can change to use a more global definition.
-	*/
-
-	Wire.setClock(1000000);
-	
+	*/	
 
 	// LSM6DSOX Setup
-	lsm6dsox.begin_I2C(LSM6DS_I2CADDR_DEFAULT, &Wire, 0);
-
-	/** The accelerometer data range 
-	typedef enum accel_range {
-		LSM6DS_ACCEL_RANGE_2_G,
-		LSM6DS_ACCEL_RANGE_4_G,
-		LSM6DS_ACCEL_RANGE_8_G,
-		LSM6DS_ACCEL_RANGE_16_G
-	} lsm6ds_accel_range_t; */
-
-	lsm6dsox.setAccelRange(LSM6DS_ACCEL_RANGE_16_G);
-
-	/** The gyro data range
-	typedef enum gyro_range {
-		LSM6DS_GYRO_RANGE_125_DPS = 0b0010,
-		LSM6DS_GYRO_RANGE_250_DPS = 0b0000,
-		LSM6DS_GYRO_RANGE_500_DPS = 0b0100,
-		LSM6DS_GYRO_RANGE_1000_DPS = 0b1000,
-		LSM6DS_GYRO_RANGE_2000_DPS = 0b1100,
-		ISM330DHCX_GYRO_RANGE_4000_DPS = 0b0001
-	} lsm6ds_gyro_range_t; */
-
-	lsm6dsox.setGyroRange(LSM6DS_GYRO_RANGE_2000_DPS);
-
-	/** The accelerometer data rate
-	typedef enum data_rate {
-		LSM6DS_RATE_SHUTDOWN,
-		LSM6DS_RATE_12_5_HZ,
-		LSM6DS_RATE_26_HZ,
-		LSM6DS_RATE_52_HZ,
-		LSM6DS_RATE_104_HZ,
-		LSM6DS_RATE_208_HZ,
-		LSM6DS_RATE_416_HZ,
-		LSM6DS_RATE_833_HZ,
-		LSM6DS_RATE_1_66K_HZ,
-		LSM6DS_RATE_3_33K_HZ,
-		LSM6DS_RATE_6_66K_HZ,
-	} lsm6ds_data_rate_t; */
-
-	lsm6dsox.setAccelDataRate(LSM6DS_RATE_1_66K_HZ);
-	lsm6dsox.setGyroDataRate(LSM6DS_RATE_1_66K_HZ);
-
-	/** The high pass filter bandwidth
-	typedef enum hpf_range {
-		LSM6DS_HPF_ODR_DIV_50 = 0,
-		LSM6DS_HPF_ODR_DIV_100 = 1,
-		LSM6DS_HPF_ODR_DIV_9 = 2,
-		LSM6DS_HPF_ODR_DIV_400 = 3,
-	} lsm6ds_hp_filter_t; */
+	lsm6dsox.begin_I2C();
+	lsm6dsox.setAccelRange(IMU_A_RANGE);
+	lsm6dsox.setGyroRange(IMU_G_RANGE);
+	lsm6dsox.setAccelDataRate(IMU_A_DATA_RATE);
+	lsm6dsox.setGyroDataRate(IMU_G_DATA_RATE);
 
 	/*!
 		@brief Sets the INT1 and INT2 pin activation mode
@@ -88,55 +41,11 @@ IMU_9DOF::IMU_9DOF() {
 	lsm6dsox.configInt2(false, false, false);
 
 	// LIS3MDL Setup
-	lis3mdl.begin_I2C(LIS3MDL_I2CADDR_DEFAULT, &Wire);
-
-	/** The magnetometer ranges
-	typedef enum {
-		LIS3MDL_RANGE_4_GAUSS = 0b00,  ///< +/- 4g (default value)
-		LIS3MDL_RANGE_8_GAUSS = 0b01,  ///< +/- 8g
-		LIS3MDL_RANGE_12_GAUSS = 0b10, ///< +/- 12g
-		LIS3MDL_RANGE_16_GAUSS = 0b11, ///< +/- 16g
-	} lis3mdl_range_t; */
-
-	lis3mdl.setRange(LIS3MDL_RANGE_16_GAUSS);
-
-
-	/** The magnetometer data rate, includes FAST_ODR bit
-	typedef enum {
-		LIS3MDL_DATARATE_0_625_HZ = 0b0000, ///<  0.625 Hz
-		LIS3MDL_DATARATE_1_25_HZ = 0b0010,  ///<  1.25 Hz
-		LIS3MDL_DATARATE_2_5_HZ = 0b0100,   ///<  2.5 Hz
-		LIS3MDL_DATARATE_5_HZ = 0b0110,     ///<  5 Hz
-		LIS3MDL_DATARATE_10_HZ = 0b1000,    ///<  10 Hz
-		LIS3MDL_DATARATE_20_HZ = 0b1010,    ///<  20 Hz
-		LIS3MDL_DATARATE_40_HZ = 0b1100,    ///<  40 Hz
-		LIS3MDL_DATARATE_80_HZ = 0b1110,    ///<  80 Hz
-		LIS3MDL_DATARATE_155_HZ = 0b0001,   ///<  155 Hz (FAST_ODR + UHP)
-		LIS3MDL_DATARATE_300_HZ = 0b0011,   ///<  300 Hz (FAST_ODR + HP)
-		LIS3MDL_DATARATE_560_HZ = 0b0101,   ///<  560 Hz (FAST_ODR + MP)
-		LIS3MDL_DATARATE_1000_HZ = 0b0111,  ///<  1000 Hz (FAST_ODR + LP)
-	} lis3mdl_dataRate_t; */
-
-	lis3mdl.setDataRate(LIS3MDL_DATARATE_1000_HZ);
-
-	/** The magnetometer performance mode
-	typedef enum {
-		LIS3MDL_LOWPOWERMODE = 0b00,  ///< Low power mode
-		LIS3MDL_MEDIUMMODE = 0b01,    ///< Medium performance mode
-		LIS3MDL_HIGHMODE = 0b10,      ///< High performance mode
-		LIS3MDL_ULTRAHIGHMODE = 0b11, ///< Ultra-high performance mode
-	} lis3mdl_performancemode_t; */
-
-	lis3mdl.setPerformanceMode(LIS3MDL_HIGHMODE);
-
-	/** The magnetometer operation mode
-	typedef enum {
-		LIS3MDL_CONTINUOUSMODE = 0b00, ///< Continuous conversion
-		LIS3MDL_SINGLEMODE = 0b01,     ///< Single-shot conversion
-		LIS3MDL_POWERDOWNMODE = 0b11,  ///< Powered-down mode
-	} lis3mdl_operationmode_t; */
-
-	lis3mdl.setOperationMode(LIS3MDL_CONTINUOUSMODE);
+	lis3mdl.begin_I2C();
+	lis3mdl.setRange(IMU_M_RANGE);
+	lis3mdl.setDataRate(IMU_M_DATA_RATE);
+	lis3mdl.setPerformanceMode(IMU_M_PERFORMANCE);
+	lis3mdl.setOperationMode(IMU_M_OP_MODE);
 	
 	lis3mdl.configInterrupt(false, false, false, // enable z axis
 											true, // polarity
@@ -144,14 +53,97 @@ IMU_9DOF::IMU_9DOF() {
 											true); // enabled!
 }
 
+// void IMU_9DOF::read_lsm6dsox(){
+// 	/*
+// 		Get the jawns from the jimmys
+// 	*/
+// 	// unsigned long read_start = micros();
+// 	// if (lsm6dsox.accelerationAvailable()){
+// 	// 	lsm6dsox.readAcceleration(data[0], data[1], data[2]);
+// 	// }
+// 	lsm6dsox._read();
+// 	// data[0] = 
+// 	// data[1] = 
+// 	// data[2] = 
+
+// 	// Serial.print("LSM6DSOX accel read time: "); Serial.println(micros() - read_start);
+// }
+
+// void IMU_9DOF::read_lsm6dsox(){
+//   // get raw readings
+//   Adafruit_BusIO_Register data_reg = Adafruit_BusIO_Register(
+//       i2c_dev, spi_dev, ADDRBIT8_HIGH_TOREAD, LSM6DS_OUTX_L_G, 12);
+
+//   uint8_t raw_buffer[14];
+//   data_reg.read(raw_buffer, 14);
+
+//   rawTemp = raw_buffer[1] << 8 | raw_buffer[0];
+//   temperature = (rawTemp / temperature_sensitivity) + 25.0;
+
+//   data[3] = raw_buffer[3] << 8 | raw_buffer[2];
+//   data[4] = raw_buffer[5] << 8 | raw_buffer[4];
+//   data[5] = raw_buffer[7] << 8 | raw_buffer[6];
+
+//   data[0] = raw_buffer[9] << 8 | raw_buffer[8];
+//   data[1] = raw_buffer[11] << 8 | raw_buffer[10];
+//   data[2] = raw_buffer[13] << 8 | raw_buffer[12];
+
+//   float gyro_scale = 1; // range is in milli-dps per bit!
+//   switch (gyroRangeBuffered) {
+//   case ISM330DHCX_GYRO_RANGE_4000_DPS:
+//     gyro_scale = 140.0;
+//     break;
+//   case LSM6DS_GYRO_RANGE_2000_DPS:
+//     gyro_scale = 70.0;
+//     break;
+//   case LSM6DS_GYRO_RANGE_1000_DPS:
+//     gyro_scale = 35.0;
+//     break;
+//   case LSM6DS_GYRO_RANGE_500_DPS:
+//     gyro_scale = 17.50;
+//     break;
+//   case LSM6DS_GYRO_RANGE_250_DPS:
+//     gyro_scale = 8.75;
+//     break;
+//   case LSM6DS_GYRO_RANGE_125_DPS:
+//     gyro_scale = 4.375;
+//     break;
+//   }
+
+//   gyroX = rawGyroX * gyro_scale * SENSORS_DPS_TO_RADS / 1000.0;
+//   gyroY = rawGyroY * gyro_scale * SENSORS_DPS_TO_RADS / 1000.0;
+//   gyroZ = rawGyroZ * gyro_scale * SENSORS_DPS_TO_RADS / 1000.0;
+
+//   float accel_scale = 1; // range is in milli-g per bit!
+//   switch (accelRangeBuffered) {
+//   case LSM6DS_ACCEL_RANGE_16_G:
+//     accel_scale = 0.488;
+//     break;
+//   case LSM6DS_ACCEL_RANGE_8_G:
+//     accel_scale = 0.244;
+//     break;
+//   case LSM6DS_ACCEL_RANGE_4_G:
+//     accel_scale = 0.122;
+//     break;
+//   case LSM6DS_ACCEL_RANGE_2_G:
+//     accel_scale = 0.061;
+//     break;
+//   }
+
+//   accX = rawAccX * accel_scale * SENSORS_GRAVITY_STANDARD / 1000;
+//   accY = rawAccY * accel_scale * SENSORS_GRAVITY_STANDARD / 1000;
+//   accZ = rawAccZ * accel_scale * SENSORS_GRAVITY_STANDARD / 1000;
+// }
+
 void IMU_9DOF::read_lsm6dsox_accel(){
 	/*
 		Get the jawns from the jimmys
 	*/
 	// unsigned long read_start = micros();
-	if (lsm6dsox.accelerationAvailable()){
-		lsm6dsox.readAcceleration(buffer[0], buffer[1], buffer[2]);
-	}
+	// if (lsm6dsox.accelerationAvailable()){
+	// 	lsm6dsox.readAcceleration(buffer[0], buffer[1], buffer[2]);
+	// }
+	lsm6dsox.readAcceleration(data[6], data[7], data[8]);
 
 	// Serial.print("LSM6DSOX accel read time: "); Serial.println(micros() - read_start);
 }
@@ -161,10 +153,10 @@ void IMU_9DOF::read_lsm6dsox_gyro(){
 		Get the jawns from the jimmys
 	*/
 	// unsigned long read_start = micros();
-	if (lsm6dsox.gyroscopeAvailable()){
-		lsm6dsox.readGyroscope(buffer[3], buffer[4], buffer[5]);
-	}
-
+	// if (lsm6dsox.gyroscopeAvailable()){
+	// 	lsm6dsox.readGyroscope(data[3], data[4], data[5]);
+	// }
+	lsm6dsox.readGyroscope(data[9], data[10], data[11]);
 	// Serial.print("LSM6DSOX gyro read time: "); Serial.println(micros() - read_start);
 }
 
@@ -174,33 +166,44 @@ void IMU_9DOF::read_lis3mdl(){
 	*/
 	// unsigned long read_start = micros();
 	// lis3mdl.read();
-	if (lis3mdl.magneticFieldAvailable()){
-		lis3mdl.readMagneticField(buffer[6], buffer[7], buffer[8]);
-	}
+	// if (lis3mdl.magneticFieldAvailable()){
+	// 	lis3mdl.readMagneticField(data[6], data[7], data[8]);
+	// }
+	lis3mdl.readMagneticField(data[12], data[13], data[14]);
 
 	// Serial.print("LIS3MDL mag read time: "); Serial.println(micros() - read_start);
 }
 
-void IMU_9DOF::pretty_print_buffer(){
+void IMU_9DOF::pretty_print_data(){
 	/*
 		In case you want to show the jawns coming from the jimmys.
 	*/
-	Serial.println("=========== IMU_9DOF Buffer ===========");
+	Serial.println("=========== IMU_9DOF data ===========");
+
+	Serial.print("Acceleration Raw\t");
+	Serial.print(data[0]); Serial.print("\t"); 
+	Serial.print(data[1]); Serial.print("\t"); 
+	Serial.println(data[2]);
+
+	Serial.print("Gyroscope Raw\t");
+	Serial.print(data[3]); Serial.print("\t"); 
+	Serial.print(data[4]); Serial.print("\t"); 
+	Serial.println(data[5]);
 	
 	Serial.print("Acceleration\t");
-	Serial.print(buffer[0]); Serial.print("\t"); 
-	Serial.print(buffer[1]); Serial.print("\t"); 
-	Serial.println(buffer[2]);
+	Serial.print(data[6]); Serial.print("\t"); 
+	Serial.print(data[7]); Serial.print("\t"); 
+	Serial.println(data[8]);
 
 	Serial.print("Gyroscope\t");
-	Serial.print(buffer[3]); Serial.print("\t"); 
-	Serial.print(buffer[4]); Serial.print("\t"); 
-	Serial.println(buffer[5]);
+	Serial.print(data[9]); Serial.print("\t"); 
+	Serial.print(data[10]); Serial.print("\t"); 
+	Serial.println(data[11]);
 
 	Serial.print("Magnetometer\t");
-	Serial.print(buffer[6]); Serial.print("\t"); 
-	Serial.print(buffer[7]); Serial.print("\t"); 
-	Serial.println(buffer[8]);
+	Serial.print(data[12]); Serial.print("\t"); 
+	Serial.print(data[13]); Serial.print("\t"); 
+	Serial.println(data[14]);
 	
 	Serial.println("=======================================");
 	
