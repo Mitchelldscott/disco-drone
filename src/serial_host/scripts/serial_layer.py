@@ -1,4 +1,4 @@
-#! /usr/env python3
+#! /usr/bin/env python3
 
 
 """
@@ -76,20 +76,17 @@ class SerialAgent:
 			if self.device:
 				self.device.close()
 
-			self.device = serial.Serial('/dev/ttyACM1', 1000000, timeout=10)
+			self.device = serial.Serial('/dev/ttyACM0', 1000000, timeout=10)
 			self.device.flush()
 			self.connected = True
 
 		except Exception as e:
-			self.log(f'Error Detecting Device at /dev/ttyACM0')
 			self.log(e)
-			self.connected = False
-
-		if not self.connected:
+			self.log('No Device')
 			time.sleep(5)
-		else:
-			self.writeBack(b'Z')
-			self.log('Device Connected: Reading...')
+			exit(0)
+
+		self.log('Device Connected: Reading...')
 
 		return self.connected
 

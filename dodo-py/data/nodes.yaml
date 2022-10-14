@@ -1,0 +1,20 @@
+serial_layer:
+  files: ['serial_layer.py']
+
+static_tf_broadcaster:
+  files: ['static_tf_broadcaster.py']
+
+jsp:
+  files: ['joint_state_publisher']
+  package: 'joint_state_publisher'
+  args: ['robot_description:=/dodo/robot_description']
+
+rsp:
+  files: ['robot_state_publisher']
+  package: 'robot_state_publisher'
+  args: ['robot_description:=/dodo/robot_description']
+
+viz:
+  files: ['rviz']
+  package: 'rviz'
+  args: ['-d', '${PROJECT_ROOT}/dodo-py/data/viz/Kwad.rviz']
