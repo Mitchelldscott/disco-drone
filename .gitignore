@@ -1,5 +1,6 @@
 **/__pycache__
 **/.pio
+**/.DS_Store
 
 .catkin_tools/
 build/
