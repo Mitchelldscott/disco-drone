@@ -11,12 +11,6 @@ elif [[ "${UBUNTU_VERSION}" == "18.04" ]]; then
 	export ROS_DISTRO=melodic
 fi
 
-# If ROS is installed source the setup file
-
-if [[ -f /opt/ros/${ROS_DISTRO}/setup.bash ]]; then
-	source /opt/ros/${ROS_DISTRO}/setup.bash
-fi
-
 #		Setup python tools
 
 if [[ "${PATH}" != *"${PROJECT_ROOT}/buffpy/bin"* ]]; then
@@ -27,6 +21,12 @@ fi
 
 if [[ "${PYTHONPATH}" != *"${PROJECT_ROOT}/do/lib:"* ]]; then	
 	export PYTHONPATH="${PROJECT_ROOT}/dodo-py/lib/python3/dist-packages:${PYTHONPATH}" 
+fi
+
+# If ROS is installed source the setup file
+
+if [[ -f /opt/ros/${ROS_DISTRO}/setup.bash ]]; then
+	source /opt/ros/${ROS_DISTRO}/setup.bash
 fi
 
 # set ROS package path to buff-code so it can see buffpy

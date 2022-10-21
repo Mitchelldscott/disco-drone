@@ -41,7 +41,7 @@ def load_config(target_path):
 
 	return data
 
-def parse_target():
+def parse_target(robot):
 	""" 
 		Get target_path and config if they exist, all
 		input checking debugging gets done here before launch
@@ -59,7 +59,7 @@ def parse_target():
 	target_args = []
 	target_path = None
 
-	target_path = os.path.join(projectRoot, 'dodo-py', 'data')
+	target_path = os.path.join(projectRoot, 'dodo-py', 'data', robot)
 
 	config = load_config(target_path)	# None if no config
 
@@ -93,7 +93,6 @@ def launch_system(target_path, nodes):
 	core_process = None
 
 	project_root = os.getenv('PROJECT_ROOT')
-	data_path = os.path.join(project_root, 'dodo-py', 'data')
 		
 	# Set nodes and package
 
@@ -106,7 +105,7 @@ def launch_system(target_path, nodes):
 	else:
 		namespace = '/dodo'
 
-		command_string = f"rosrun xacro xacro {os.path.join(data_path, 'urdf/Kwad.xacro')}"
+		command_string = f"rosrun xacro xacro {os.path.join(target_path, 'urdf/Kwad.xacro')}"
 		robot_description = sb.check_output(command_string, shell=True, stderr=sb.STDOUT)
 
 		nodes['robot_description'] = robot_description.decode()
@@ -235,9 +234,13 @@ def main(args):
 		Launch all relevant pool.
 		See wiki for input usage
 	"""
+	if len(args) < 2:
+		robot = 'live'
+	else:
+		robot = args[1]
 
 	# parse the input 
-	target_path, target_args, config = parse_target()
+	target_path, target_args, config = parse_target(robot)
 
 	# spin till finished
 	spin(config, target_path, target_args) 

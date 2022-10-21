@@ -1,6 +1,15 @@
+gz:
+  files: ['gazebo']
+  package: 'gazebo_ros'
+
+urdf:
+  files: ['spawn_model']
+  package: 'gazebo_ros'
+  args: ['-param', '/dodo/robot_description', '-urdf', '-model', 'Kwad']
+
 serial_layer:
   files: ['serial_layer.py']
-
+  
 static_tf_broadcaster:
   files: ['static_tf_broadcaster.py']
 
@@ -17,4 +26,4 @@ rsp:
 viz:
   files: ['rviz']
   package: 'rviz'
-  args: ['-d', '${PROJECT_ROOT}/dodo-py/data/viz/Kwad.rviz']
+  args: ['-d', '${PROJECT_ROOT}/dodo-py/data/sim/viz/Kwad.rviz']
