@@ -18,7 +18,7 @@ class IMU_Odometry():
 	def __init__(self):
 		self.sensor_flags = [0, 0, 0]
 
-		# self.madgwick = Madgwick(gain=0.45)
+		self.madgwick = Madgwick(gain=0.45)
 		# self.Complimentary
 
 		self.sensor_mag = np.zeros(3)

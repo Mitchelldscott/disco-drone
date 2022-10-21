@@ -104,7 +104,7 @@ class IMU_9DOF{
 		void read_lsm6dsox_gyro();
 		void pretty_print_data();
 
-		float data[15];
+		float data[9];
 
 	private:
 		// Adafruit_I2CDevice *i2c_dev = NULL; ///< Pointer to I2C bus interface

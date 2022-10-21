@@ -143,7 +143,7 @@ void IMU_9DOF::read_lsm6dsox_accel(){
 	// if (lsm6dsox.accelerationAvailable()){
 	// 	lsm6dsox.readAcceleration(buffer[0], buffer[1], buffer[2]);
 	// }
-	lsm6dsox.readAcceleration(data[6], data[7], data[8]);
+	lsm6dsox.readAcceleration(data[0], data[1], data[2]);
 
 	// Serial.print("LSM6DSOX accel read time: "); Serial.println(micros() - read_start);
 }
@@ -156,7 +156,7 @@ void IMU_9DOF::read_lsm6dsox_gyro(){
 	// if (lsm6dsox.gyroscopeAvailable()){
 	// 	lsm6dsox.readGyroscope(data[3], data[4], data[5]);
 	// }
-	lsm6dsox.readGyroscope(data[9], data[10], data[11]);
+	lsm6dsox.readGyroscope(data[3], data[4], data[5]);
 	// Serial.print("LSM6DSOX gyro read time: "); Serial.println(micros() - read_start);
 }
 
@@ -169,7 +169,7 @@ void IMU_9DOF::read_lis3mdl(){
 	// if (lis3mdl.magneticFieldAvailable()){
 	// 	lis3mdl.readMagneticField(data[6], data[7], data[8]);
 	// }
-	lis3mdl.readMagneticField(data[12], data[13], data[14]);
+	lis3mdl.readMagneticField(data[6], data[7], data[8]);
 
 	// Serial.print("LIS3MDL mag read time: "); Serial.println(micros() - read_start);
 }

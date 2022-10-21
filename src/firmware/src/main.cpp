@@ -73,7 +73,7 @@ void loop(){
 	if (millis() - serial_time > serial_rate) {
 		// Stop the interrupts and print the jawns
 		noInterrupts();
-		comms.send_floats("II", imu.data, 15);
+		comms.send_floats("II", imu.data, 9);
 		interrupts();
 		serial_time = millis();
 	}

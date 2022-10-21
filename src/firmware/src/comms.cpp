@@ -5,11 +5,11 @@ COMMS::COMMS(){
 }
 
 
-void COMMS::read_packet(byte* buffer){
-	if (Serial.available()) {
-		Serial.read();
-	}
-}
+// void COMMS::read_packet(byte* buffer){
+// 	if (Serial.available()) {
+// 		Serial.read();
+// 	}
+// }
 
 
 void COMMS::send_packet(byte* buffer){
