@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 
 import rospy
-
-# because of transformations
 import tf
+# because of transformations
 import numpy as np
 
 import tf2_ros
@@ -30,6 +29,7 @@ def omega_from_quaternions(q1, q2, dt):
 	Convert a quaternion into euler angle rates (droll, dpitch, dyaw)
 	"""
 	rpy1 = eulers_from_quaternion(q1)
+	# print(rpy1)
 	rpy2 = eulers_from_quaternion(q2)
 
 	return (rpy1 - rpy2) / dt
@@ -40,7 +40,7 @@ class IMU_Odometry():
 		self.sensor_flags = [0, 0, 0]
 
 		self.madgwick = Madgwick(gain=0.45)
-		self.complementary = Complementary(gain=0.25)
+		self.complementary = Complementary(gain=0.45)
 
 		self.sensor_mag = np.zeros(3)
 		self.sensor_gyro = np.zeros(3)
@@ -55,7 +55,7 @@ class IMU_Odometry():
 		self.gyro_sub = rospy.Subscriber('/gyro_raw', Float64MultiArray, self.gyro_callback)
 		self.accel_sub = rospy.Subscriber('/accel_raw', Float64MultiArray, self.accel_callback)
 
-		rate = 300
+		rate = 100
 		self.dt = 1 / rate
 		self.rate = rospy.Rate(rate)
 		self.madgwick.Dt = 1 / rate
@@ -118,18 +118,22 @@ class IMU_Odometry():
 
 		omega = omega_from_quaternions(new_quaternion, self.quaternion, self.dt)
 
-		self.quaternion = new_quaternion  #+ (0.25 * self.q_prop)
-		# self.quaternion /= np.linalg.norm(self.quaternion)
+		# self.quaternion = new_quaternion  #+ (0.25 * self.q_prop)
+		# # self.quaternion /= np.linalg.norm(self.quaternion)
 
-		self.q_prop = self.complementary.attitude_propagation(new_quaternion, omega)
+		self.quaternion = self.complementary.attitude_propagation(new_quaternion, omega)
 
 
 	def spin(self):
 		while not rospy.is_shutdown():
-			self.broadcast_pose()
-			# self.madgwick_filter()
-			self.complementary_filter()
+			if self.sensor_flags[0] or self.sensor_flags[1] or self.sensor_flags[2]:
+				self.complementary_filter()
+
+				self.broadcast_pose()
+				# self.madgwick_filter()
+				
 			self.rate.sleep()
+
 
 if __name__ == '__main__':
 	rospy.init_node('static_tf_broadcaster')

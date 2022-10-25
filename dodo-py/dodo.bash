@@ -13,21 +13,23 @@ fi
 
 #		Setup python tools
 
-if [[ "${PATH}" != *"${PROJECT_ROOT}/buffpy/bin"* ]]; then
+if [[ "${PATH}" != *"${PROJECT_ROOT}/dodo-py/bin"* ]]; then
 	export PATH="${PROJECT_ROOT}/dodo-py/bin:${PATH}"
-fi 
-
-# Only export if if not already in path
-
-if [[ "${PYTHONPATH}" != *"${PROJECT_ROOT}/do/lib:"* ]]; then	
-	export PYTHONPATH="${PROJECT_ROOT}/dodo-py/lib/python3/dist-packages:${PYTHONPATH}" 
-fi
+fi  
 
 # If ROS is installed source the setup file
 
 if [[ -f /opt/ros/${ROS_DISTRO}/setup.bash ]]; then
 	source /opt/ros/${ROS_DISTRO}/setup.bash
 fi
+
+# Only export if if not already in path
+
+if [[ "${UBUNTU_VERSION}" != "20.04" ]]; then
+	if [[ "${PYTHONPATH}" != *"${PROJECT_ROOT}/dodo-py/lib:"* ]]; then	
+		export PYTHONPATH="${PROJECT_ROOT}/dodo-py/lib/python3/dist-packages:${PYTHONPATH}" 
+	fi
+fi 
 
 # set ROS package path to buff-code so it can see buffpy
 
@@ -38,6 +40,7 @@ fi
 
 alias install-py="cp ${PROJECT_ROOT}/src/serial_host/scripts/* ${PROJECT_ROOT}/dodo-py/lib && \
 					cp ${PROJECT_ROOT}/src/localization/scripts/* ${PROJECT_ROOT}/dodo-py/lib && \
+					cp ${PROJECT_ROOT}/src/locomotion/scripts/* ${PROJECT_ROOT}/dodo-py/lib && \
 					chmod +x ${PROJECT_ROOT}/dodo-py/lib/*"
 
 alias build-fw="cd ${PROJECT_ROOT}/src/firmware && \

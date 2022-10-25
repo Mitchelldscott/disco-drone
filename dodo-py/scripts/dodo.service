@@ -1,0 +1,14 @@
+[Unit]
+Description=CU Robotics Startup Service
+ConditionPathExists=/home/ubuntu/dico-drone/dodo-py
+
+[Service]
+Type=forking
+Restart=always
+User=ubuntu
+TimeoutStartSec=900
+WorkingDirectory=/home/ubuntu/dico-drone
+ExecStart=/bin/bash -c 'source /home/ubuntu/dico-drone/dodo-py/dodo.bash && run live'
+
+[Install]
+WantedBy=multi-user.target

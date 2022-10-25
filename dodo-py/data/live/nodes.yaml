@@ -1,6 +1,9 @@
 serial_layer:
   files: ['serial_layer.py']
 
+controller:
+  files: ['controller.py']
+
 static_tf_broadcaster:
   files: ['static_tf_broadcaster.py']
 
@@ -14,7 +17,7 @@ rsp:
   package: 'robot_state_publisher'
   args: ['robot_description:=/dodo/robot_description']
 
-viz:
-  files: ['rviz']
-  package: 'rviz'
-  args: ['-d', '${PROJECT_ROOT}/dodo-py/data/sim/viz/Kwad.rviz']
+# viz:
+#   files: ['rviz']
+#   package: 'rviz'
+#   args: ['-d', '${PROJECT_ROOT}/dodo-py/data/sim/viz/Kwad.rviz']

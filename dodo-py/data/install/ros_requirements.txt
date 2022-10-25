@@ -1,0 +1,6 @@
+rosdep
+wstool
+rosinstall
+defusedxml
+catkin-tools
+rosinstall-generator

@@ -105,7 +105,7 @@ def launch_system(target_path, nodes):
 	else:
 		namespace = '/dodo'
 
-		command_string = f"rosrun xacro xacro {os.path.join(target_path, 'urdf/Kwad.xacro')}"
+		command_string = f"rosrun xacro xacro {os.path.join(project_root, 'dodo-py/data/sim/urdf/Kwad.xacro')}"
 		robot_description = sb.check_output(command_string, shell=True, stderr=sb.STDOUT)
 
 		nodes['robot_description'] = robot_description.decode()

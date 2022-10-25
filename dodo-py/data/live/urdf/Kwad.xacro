@@ -10,8 +10,8 @@
 	<xacro:property name="radiusp" value="0.20" />
 	<xacro:property name="prop_loc" value="0.15909" />
 <!-- ======================================================== -->	
-	<xacro:include filename="$(find disco_drone_control)/urdf/material.xacro" />
-	<xacro:include filename="$(find disco_drone_control)/urdf/Kwad.gazebo" />
+	<xacro:include filename="$(find dodo-py)/data/sim/urdf/material.xacro" />
+	<xacro:include filename="$(find dodo-py)/data/sim/urdf/Kwad.gazebo" />
 <!-- ======================================================== -->
 	<!-- Define inertial macro -->
 	<xacro:macro name="default_inertial" params="mass p ix_value iy_value iz_value" >

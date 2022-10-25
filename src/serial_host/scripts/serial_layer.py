@@ -109,6 +109,9 @@ class SerialAgent:
 		"""
 		  Callback for writing messages to the arduino
 		"""
+		if self.device is None:
+			return 
+
 		self.writeBack(bytes(msg.data, 'utf-8'))
 
 	def log(self, text):
@@ -164,6 +167,7 @@ class SerialAgent:
 				elif self.device.in_waiting:
 					packet = self.device.readline().decode().rstrip()
 					self.parsePacket(packet, rospy.Time.now())
+					
 
 		except Exception as e:
 			traceback.print_exc()
