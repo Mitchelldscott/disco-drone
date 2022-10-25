@@ -55,10 +55,10 @@ class Kwad_Controller():
 										self.transform.transform.rotation.y, 
 										self.transform.transform.rotation.z])
 
-				self.control = np.array([[0.0, -1.0, -0.1],
-									[-1.0, 0.0, 0.1],
-									[0.0, 1.0, -0.1],
-									[1.0, 0.0, 0.1]]) @ rpy.T
+				self.control = np.array([[0.0, 100.0, -1.0],
+									[-100.0, 0.0, 1.0],
+									[0.0, 100.0, -1.0],
+									[-100.0, 0.0, 1.0]]) @ rpy.T
 
 				# print(rpy,self.control)
 				msg = String()

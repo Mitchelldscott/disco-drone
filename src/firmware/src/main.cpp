@@ -5,7 +5,7 @@
 
 unsigned long top_time;
 unsigned long serial_time;
-unsigned long cycle_rate = 1000;
+unsigned long cycle_rate = 3000;
 unsigned long serial_rate = 1;
 
 COMMS comms;
@@ -55,11 +55,11 @@ void setup(){
 	// set built in LED pin to output mode
 	pinMode(LED_BUILTIN, OUTPUT);
 
-	lis3mdl_tmr.begin(read_lis3mdl, 3000);
-	delayMicroseconds(854);
-	lsm6dsox_gyro_tmr.begin(read_lsm6dsox_gyro, 3000);
-	delayMicroseconds(855);
-	lsm6dsox_accel_tmr.begin(read_lsm6dsox_accel, 3000);
+	// lis3mdl_tmr.begin(read_lis3mdl, 3000);
+	// delayMicroseconds(854);
+	// lsm6dsox_gyro_tmr.begin(read_lsm6dsox_gyro, 3000);
+	// delayMicroseconds(855);
+	// lsm6dsox_accel_tmr.begin(read_lsm6dsox_accel, 3000);
 }
 
 
@@ -70,11 +70,15 @@ void loop(){
 
 	blink();
 
+	read_lis3mdl();
+	read_lsm6dsox_gyro();
+	read_lsm6dsox_accel();
+
 	if (millis() - serial_time > serial_rate) {
 		// Stop the interrupts and print the jawns
-		noInterrupts();
+		// noInterrupts();
 		comms.send_floats("II", imu.data, 9);
-		interrupts();
+		// interrupts();
 		serial_time = millis();
 	}
 	
