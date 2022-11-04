@@ -6,7 +6,12 @@ clear all
 
 %% Parameters
 
-syms theta phi psi
+TS = 0.2;
+
+% syms theta phi psi
+theta = 0;
+phi = 0;
+psi = 0;
 
 b = 0.0069272118;
 Jx = 0.0032132169;
@@ -40,7 +45,8 @@ A = [0 1 0 0 0 0;...
     0 0 0 0 0 0;...
     0 0 0 1 0 0;...
     0 0 0 0 0 0;...
-    0 0 0 0 0 1];
+    0 0 0 0 0 1;...
+    0 0 0 0 0 0];
 B = [0 0 0 0;...
     b*L*(BN(3,1)-BN(1,1)) -b*L*(BN(1,3)+BN(1,2)) b*L*(BN(3,1)+BN(1,1)) -b*L*(BN(1,3)+BN(1,2));...
     0 0 0 0;...
@@ -50,3 +56,11 @@ B = [0 0 0 0;...
 C = eye(6);
 D = 0;
 
+sys_c = ss(A,B,C,D);
+sys_z = c2d(sys_c, TS);
+Az = sys_z.A;
+Bz = sys_z.B;
+Cz = sys_z.C;
+Dz = sys_z.D;
+
+open_system('quadcopterR2.slx')
