@@ -64,3 +64,31 @@ Cz = sys_z.C;
 Dz = sys_z.D;
 
 open_system('quadcopterR2.slx')
+
+%% Pole placement
+
+% parameters
+tr = 0.1; % s
+Mp = 0.1; % %/100
+
+zeta = abs(log(Mp))/sqrt(pi^2+log(Mp)^2);
+wn = 1.8/tr;
+
+figure(1);
+zgrid(zeta,wn*TS/(2*pi),TS)
+grid on
+axis equal
+
+epsilon = wn*TS/(2*pi)/100;
+p1 =  wn*TS/(2*pi) - epsilon;
+p2 = p1;
+
+wn1 = pi/(TS*sqrt(1-zeta^2))
+xncross = exp(-zeta*wn1*TS);
+p3 = -xncross+epsilon;
+p4 = p3;
+p5 = -xncross+2*epsilon;
+p6 = p5;
+
+p = [p1,p2,p3,p4,p5,p6];
+K = place(Az,Bz,p)
