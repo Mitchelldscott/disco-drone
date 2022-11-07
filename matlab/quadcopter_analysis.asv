@@ -3,7 +3,7 @@ clc
 close all
 clear all
 
-fignum = 1;
+
 %% Parameters
 
 TS = 0.2;
@@ -66,10 +66,7 @@ open_system('quadcopterR2.slx')
 [b2,a2] = ss2tf(Az,Bz,Cz,Dz,2);
 [b3,a3] = ss2tf(Az,Bz,Cz,Dz,3);
 [b4,a4] = ss2tf(Az,Bz,Cz,Dz,4);
-% check that poles of all systems are the same
-assert(a1==a2); assert(a1==a3); assert(a1==a4); 
-figure(fignum);
-fignum = fignum + 1;
+assert(a1==a2); assert(a1==a3)
 pzplot(tf(1,a1,TS))
 xlim([-1,1]);
 ylim([-1,1]);
@@ -86,8 +83,7 @@ wn = 1.8/tr;
 if wNyq < wn; wn = wNyq; end
 
 
-figure(fignum);
-fignum = fignum + 1;
+figure(1);
 zgrid(zeta,wn*TS/(2*pi),TS)
 grid on
 axis equal
@@ -99,9 +95,9 @@ p2 = p1;
 wn1 = pi/(TS*sqrt(1-zeta^2));
 xncross = exp(-zeta*wn1*TS);
 p3 = -xncross+epsilon;
-p4 = -xncross+2*epsilon;
+p4 = -xncross+2*epsilon;;
 p5 = -xncross+3*epsilon;
-p6 = -xncross+4*epsilon;
+p6 = -xncross+4*epsilon;;
 
 p = [p1,p2,p3,p4,p5,p6];
 K = place(Az,Bz,p)
