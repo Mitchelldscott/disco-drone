@@ -12,7 +12,7 @@ wNyq = pi/TS;
 % syms theta phi psi
 phi = 0;
 theta = 0;
-psi = 0.3;
+psi = 0;
 
 b = 0.0254478822; % 0.0069272118;
 Jx = 0.0032132169;
@@ -81,7 +81,7 @@ zgrid();
 
 % parameters
 tr = 0.1; % s
-Mp = 0.5; % %/100
+Mp = 0.2; % %/100
 
 zeta = abs(log(Mp))/sqrt(pi^2+log(Mp)^2);
 wn = 1.8/tr;
@@ -95,16 +95,16 @@ zgrid(zeta,wn*TS/(2*pi),TS)
 grid on
 axis equal
 
-epsilon = wn*TS/(2*pi)/100;
+epsilon = wn*TS/(2*pi)/10;
 p1 =  1-wn*TS/(2*pi) - epsilon;
 p2 = p1;
 
 wn1 = pi/(TS*sqrt(1-zeta^2));
 xncross = exp(-zeta*wn1*TS);
-p3 = -xncross+epsilon;
-p4 = -xncross+2*epsilon;
-p5 = -xncross+3*epsilon;
-p6 = -xncross+4*epsilon;
+p3 = -xncross+10*epsilon;
+p4 = -xncross+20*epsilon;
+p5 = -xncross+30*epsilon;
+p6 = -xncross+40*epsilon;
 % p3 = epsilon;
 % p4 = 2*epsilon;
 % p5 = 3*epsilon;
@@ -124,4 +124,4 @@ zgrid();
 
 %% Open Simulink
 
-open_system('quadcopterR2.slx')
+open_system('quadcopterR2Fe.slx')

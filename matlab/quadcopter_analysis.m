@@ -4,6 +4,7 @@ close all
 clear all
 
 fignum = 1;
+figshow = 0;
 %% Parameters
 
 TS = 0.02; % 50 Hz
@@ -70,12 +71,14 @@ for i = 1:length(a1)
     assert(a1(i)==a3(i));
     assert(a1(i)==a4(i)); 
 end
-figure(fignum);
-fignum = fignum + 1;
-pzplot(tf(1,a1,TS))
-xlim([-1,1]);
-ylim([-1,1]);
-zgrid();
+if(figshow)
+    figure(fignum);
+    fignum = fignum + 1;
+    pzplot(tf(1,a1,TS))
+    xlim([-1,1]);
+    ylim([-1,1]);
+    zgrid();
+end
 
 %% Pole placement
 
@@ -88,12 +91,13 @@ wn = 1.8/tr;
 
 if wNyq < wn; disp('wn = '); disp(wn); disp('wn set to wNyq = '); disp(wNyq); wn = wNyq; end
 
-
-figure(fignum);
-fignum = fignum + 1;
-zgrid(zeta,wn*TS/(2*pi),TS)
-grid on
-axis equal
+if(figshow)
+    figure(fignum);
+    fignum = fignum + 1;
+    zgrid(zeta,wn*TS/(2*pi),TS)
+    grid on
+    axis equal
+end
 
 epsilon = wn*TS/(2*pi)/10;
 p1 =  1-wn*TS/(2*pi) - epsilon;
@@ -115,13 +119,20 @@ K = place(Az,Bz,p);
 disp('Feedback gain, K: '); disp(K);
 
 z = tf('z',TS);
-figure(fignum);
-fignum = fignum + 1;
-pzplot(1/((z-p1)*(z-p2)*(z-p3)*(z-p4)*(z-p5)*(z-p6)))
-xlim([-1,1]);
-ylim([-1,1]);
-zgrid();
+if(figshow)
+    figure(fignum);
+    fignum = fignum + 1;
+    pzplot(1/((z-p1)*(z-p2)*(z-p3)*(z-p4)*(z-p5)*(z-p6)))
+    xlim([-1,1]);
+    ylim([-1,1]);
+    zgrid();
+end
 
 %% Open Simulink
+% initial conditions for Simulink
+phi_init = 0;
+theta_init = 0;
+psi_init = 0;
 
-open_system('quadcopterR2.slx')
+% open_system('quadcopterR2.slx')
+open_system('quadcopterR2Feedback.slx')
