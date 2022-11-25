@@ -130,9 +130,9 @@ end
 
 %% Open Simulink
 % initial conditions for Simulink
-phi_init = 0;
+phi_init = 0.1;
 theta_init = 0;
 psi_init = 0;
-
+% 
 % open_system('quadcopterR2.slx')
 open_system('quadcopterR2Feedback.slx')
