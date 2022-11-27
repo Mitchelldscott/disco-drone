@@ -4,6 +4,7 @@
 export PROJECT_ROOT=${PWD}
 export HOSTNAME=$HOSTNAME 
 export SUDO='sudo'
+export ROBOT_IP=192.168.1.106
 
 if [[ "${UBUNTU_VERSION}" == "20.04" ]]; then
 	export ROS_DISTRO=noetic				# ROS for Ubuntu18
@@ -25,7 +26,7 @@ fi
 
 # Only export if if not already in path
 
-if [[ "${UBUNTU_VERSION}" != "20.04" ]]; then
+if [[ "${UBUNTU_VERSION}" == "18.04" ]]; then
 	if [[ "${PYTHONPATH}" != *"${PROJECT_ROOT}/dodo-py/lib:"* ]]; then	
 		export PYTHONPATH="${PROJECT_ROOT}/dodo-py/lib/python3/dist-packages:${PYTHONPATH}" 
 	fi
@@ -58,6 +59,10 @@ alias clean-dodo="rm -rf ${PROJECT_ROOT}/dodo-py/lib/*.py && \
 alias clean-fw="cd ${PROJECT_ROOT}/src/firmware && \
 					pio run -t clean && \
 					cd ${PROJECT_ROOT}"
+
+alias deploy="build-fw && install-py && scp -r ${PROJECT_ROOT}/dodo-py ubuntu@${ROBOT_IP}:~/disco-drone"
+
+alias sshbot="ssh ubuntu@${ROBOT_IP}"
 
 alias dodo="cd ${PROJECT_ROOT}"
 alias fw="cd ${PROJECT_ROOT}/src/firmware"

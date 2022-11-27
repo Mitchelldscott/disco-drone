@@ -1,21 +1,18 @@
 serial_layer:
-  files: ['serial_layer.py']
-
-controller:
-  files: ['controller.py']
+  files: [serial_layer.py, controller.py]
 
 static_tf_broadcaster:
-  files: ['static_tf_broadcaster.py']
+  files: [static_tf_broadcaster.py]
 
 jsp:
-  files: ['joint_state_publisher']
-  package: 'joint_state_publisher'
-  args: ['robot_description:=/dodo/robot_description']
+  files: [joint_state_publisher]
+  package: joint_state_publisher
+  args: [robot_description:=/dodo/robot_description]
 
 rsp:
-  files: ['robot_state_publisher']
-  package: 'robot_state_publisher'
-  args: ['robot_description:=/dodo/robot_description']
+  files: [robot_state_publisher]
+  package: robot_state_publisher
+  args: [robot_description:=/dodo/robot_description]
 
 # viz:
 #   files: ['rviz']

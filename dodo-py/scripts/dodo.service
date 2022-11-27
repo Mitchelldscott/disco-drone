@@ -1,14 +1,14 @@
 [Unit]
-Description=CU Robotics Startup Service
-ConditionPathExists=/home/ubuntu/dico-drone/dodo-py
+Description=Disco Drone Startup Service
+ConditionPathExists=/home/ubuntu/disco-drone/dodo-py
 
 [Service]
 Type=forking
 Restart=always
 User=ubuntu
 TimeoutStartSec=900
-WorkingDirectory=/home/ubuntu/dico-drone
-ExecStart=/bin/bash -c 'source /home/ubuntu/dico-drone/dodo-py/dodo.bash && run live'
+WorkingDirectory=/home/ubuntu/disco-drone
+ExecStart=/home/ubuntu/disco-drone/dodo-py/scripts/startup.bash
 
 [Install]
 WantedBy=multi-user.target

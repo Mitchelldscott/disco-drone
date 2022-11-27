@@ -2,14 +2,31 @@
 
 #include "comms.h"
 #include "imu_9dof.h"
+#include "pwm_control.h"
+
+#define MOTOR_1 12
+#define MOTOR_2 11
+#define MOTOR_3 10
+#define MOTOR_4 9
 
 unsigned long top_time;
 unsigned long serial_time;
 unsigned long cycle_rate = 3000;
-unsigned long serial_rate = 1;
+unsigned long serial_rate = 100;
 
 COMMS comms;
 IMU_9DOF imu;
+PWM_Controller pwm(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 12, 500);
+
+void set_pwm_signal() {
+	pwm.updateIO();
+}
+
+void read_serial(){
+	// Serial.println("read serial call");
+	comms.read_packet(pwm.data, 8);
+	// Serial.println("read serial return");
+}
 
 void read_lis3mdl(){
 	// Serial.println("read mag call");
@@ -28,11 +45,6 @@ void read_lsm6dsox_accel(){
 	imu.read_lsm6dsox_accel();	
 	// Serial.println("read accel return");
 }
-
-IntervalTimer lis3mdl_tmr;
-IntervalTimer lsm6dsox_gyro_tmr;
-IntervalTimer lsm6dsox_accel_tmr;
-
 
 void blink(){
 	static bool status = false;
@@ -54,17 +66,17 @@ void setup(){
 
 	// set built in LED pin to output mode
 	pinMode(LED_BUILTIN, OUTPUT);
-
-	// lis3mdl_tmr.begin(read_lis3mdl, 3000);
-	// delayMicroseconds(854);
-	// lsm6dsox_gyro_tmr.begin(read_lsm6dsox_gyro, 3000);
-	// delayMicroseconds(855);
-	// lsm6dsox_accel_tmr.begin(read_lsm6dsox_accel, 3000);
+	// pinMode(24, OUTPUT);
+	// digitalWrite(25, 1);
+	set_pwm_signal();
 }
 
 
 void loop(){
-	while (!Serial);
+	if (!Serial){
+		pwm.disable();
+		while(!Serial);
+	}
 
 	top_time = micros();
 
@@ -74,11 +86,12 @@ void loop(){
 	read_lsm6dsox_gyro();
 	read_lsm6dsox_accel();
 
+	set_pwm_signal();
+
 	if (millis() - serial_time > serial_rate) {
-		// Stop the interrupts and print the jawns
-		// noInterrupts();
 		comms.send_floats("II", imu.data, 9);
-		// interrupts();
+		read_serial();
+		pwm.pretty_print();
 		serial_time = millis();
 	}
 	
@@ -86,5 +99,6 @@ void loop(){
 		Serial.print("Overtime ");
 		Serial.println(micros() - top_time);
 	}
+
 	while (micros() - top_time < cycle_rate){}
 }

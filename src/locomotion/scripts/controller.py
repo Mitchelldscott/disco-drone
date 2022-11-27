@@ -8,8 +8,10 @@ import numpy as np
 
 import tf2_ros
 import geometry_msgs.msg
-from std_msgs.msg import String
+from std_msgs.msg import ByteMultiArray, Float64MultiArray
 from tf2_msgs.msg import TFMessage
+from tf.transformations import euler_from_quaternion
+
 
 def eulers_from_quaternion(q):
 	"""
@@ -29,42 +31,72 @@ class Kwad_Controller():
 		# self.tfBuffer = tf2_ros.Buffer()
 		# self.listener = tf2_ros.TransformListener(self.tfBuffer)
 
-		self.teensy_publisher = rospy.Publisher('/serial_out', String, queue_size=1)
+		self.dbg_publisher = rospy.Publisher('/teensy_command', Float64MultiArray, queue_size=1)
+		# self.teensy_publisher = rospy.Publisher('/serial_out', ByteMultiArray, queue_size=1)
 
-		self.tf_sub = rospy.Subscriber("/tf_static", TFMessage, callback=self._onNewTransformSet, queue_size=10)
+		self.tf_sub = rospy.Subscriber("/tf_static", TFMessage, callback=self.tf_callback, queue_size=1)
 		self.transform = None
 
-		rate = 50
+		rate = 100
 		self.rate = rospy.Rate(rate)
 
-	def _onNewTransformSet(self, msg):
+	def tf_callback(self, msg):
 		for transform in msg.transforms:
 			if transform.child_frame_id == 'base_link1' and transform.header.frame_id == 'map':
 				self.transform = transform
 
 	def spin(self):
+		scale = 1
+		ctr = 0
+
 		while not rospy.is_shutdown():
 			try:
 				
-				if self.transform is None:
-					self.rate.sleep()
-					continue
+				# if self.transform is None:
+				# 	self.rate.sleep()
+				# 	continue
 				
-				rpy = eulers_from_quaternion([self.transform.transform.rotation.w,
-										self.transform.transform.rotation.x, 
-										self.transform.transform.rotation.y, 
-										self.transform.transform.rotation.z])
+				# rpy = np.array(euler_from_quaternion([self.transform.transform.rotation.w,
+				# 														self.transform.transform.rotation.x, 
+				# 														self.transform.transform.rotation.y, 
+				# 														self.transform.transform.rotation.z]))
 
-				self.control = np.array([[0.0, 100.0, -1.0],
-									[-100.0, 0.0, 1.0],
-									[0.0, 100.0, -1.0],
-									[-100.0, 0.0, 1.0]]) @ rpy.T
+				# self.control = np.array([[0.0, 0.01, -0.01],
+				# 					[-0.01, 0.0, 0.01],
+				# 					[0.0, 0.01, -0.01],
+				# 					[-0.01, 0.0, 0.01]]) @ rpy.T
 
-				# print(rpy,self.control)
-				msg = String()
-				control = self.control.T
-				msg.data = f'UU,{control[0]},{control[1]},{control[2]},{control[3]}'
-				self.teensy_publisher.publish(msg)
+				self.control = np.ones((4,)) * scale
+
+				ctr += 1
+				if ctr == 400:
+					scale = 0.01
+				# if ctr == 100:
+				# 	scale += 256
+				# 	scale %= 4096
+				# 	ctr = 0
+
+				control = []
+				for c in self.control:
+					control.append(np.min([1.0,np.max([0.0,c])]))
+
+				msg = Float64MultiArray()
+				msg.data = control
+				self.dbg_publisher.publish(msg)
+
+				# msg = ByteMultiArray()
+				# data = [85, 85, 58]
+				# print(rpy, control)
+				# for u in control.tobytes():
+				# 	print(u)
+				# 	# if u > 127:
+				# 	# 	data.append(127-u)
+
+				# 	# else:
+				# 	data.append(u-128)
+
+				# msg.data = data
+				# self.teensy_publisher.publish(msg)
 
 			except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
 				continue

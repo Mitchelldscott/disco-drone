@@ -16,7 +16,7 @@ import serial
 import traceback
 import numpy as np
 import traceback as tb
-from std_msgs.msg import String, Float64, Float64MultiArray
+from std_msgs.msg import String, Float64, Float64MultiArray, ByteMultiArray
 
 class SerialAgent:
 	def __init__(self):
@@ -27,44 +27,15 @@ class SerialAgent:
 		There are a few optional parameters that can change 
 		how you publish the data.
 		"""
-		self.nPorts = 0
-		self.config = None
+		self.port_num = 0
 		self.device = None
 		self.sensors = ['accel', 'gyro', 'mag']
 		self.publishers = {}
-		# self.loadDevice(config)
-		rospy.init_node('agent', anonymous=True)
-		self.sub = rospy.Subscriber('/serial_out', String, self.writerCallback)
+		rospy.init_node('serial_layer')
+		self.sub = rospy.Subscriber('/teensy_command', Float64MultiArray, self.writerCallback)
 		self.initPublishers()
 
 		self.tryConnect()
-
-	def loadDevice(self, config):
-		"""
-		  Try to load the conf file for a device.
-		"""
-		kill = 0
-		with open(config, 'r') as stream:
-			self.config = yaml.safe_load(stream)
-
-		self.log(self.config)
-		if not 'State' in self.config:
-			kill = 1
-			self.log('Missing state description')
-		elif not self.config['State']['WHOAMI']:
-			self.config['State']['WHOAMI'] = 'Serial_Agent'
-		if not 'Baudrate' in self.config:
-			kill = 1
-			self.log('Missing Baudrate')
-		if not 'Ports' in self.config:
-			kill = 1
-			self.log('Missing Ports')
-		else:
-			 self.nPorts = len(self.config['Ports'])
-
-		if kill:
-			self.log('Check your config file')
-			sys.exit(0)
 
 	def tryConnect(self, alt=0):
 		"""
@@ -76,19 +47,21 @@ class SerialAgent:
 			if self.device:
 				self.device.close()
 
-			self.device = serial.Serial('/dev/ttyACM0', 1000000, timeout=10)
+			self.device = serial.Serial(f'/dev/ttyACM{self.port_num}', 1000000, timeout=10)
 			self.device.flush()
-			self.connected = True
 
 		except Exception as e:
 			self.log(e)
-			self.log('No Device')
-			time.sleep(5)
-			exit(0)
+			self.log(f'No Device found at /dev/ttyACM{self.port_num}')
+			# ACM# likes to switch after reset, just check all of em (0..2)
+			self.port_num += 1
+			if self.port_num >= 3:
+				exit(0)
+
+			self.tryConnect()
 
 		self.log('Device Connected: Reading...')
 
-		return self.connected
 
 	def initPublishers(self):
 		"""
@@ -99,20 +72,28 @@ class SerialAgent:
 			self.publishers[f'{topic}_raw'] = rospy.Publisher(f'{topic}_raw', Float64MultiArray, queue_size=1)
 
 
-	def writeBack(self, mesg):
+	def writeBack(self, msg):
 		"""
 		  Write a message back to the arduino
 		"""
-		self.device.write(mesg)
+		self.device.write(msg)
+		
 
 	def writerCallback(self, msg):
 		"""
 		  Callback for writing messages to the arduino
+		  Ros message float 0-1, writer uses byte 0:255
 		"""
 		if self.device is None:
 			return 
 
-		self.writeBack(bytes(msg.data, 'utf-8'))
+		# convert to uint16 then bytes
+		data = []
+		for c in msg.data:
+			data.append(np.max([0, (c * 2**16) - 1]))
+
+		byte_array = b'UU:' + np.array(data).astype(np.uint16).tobytes()
+		self.writeBack(byte_array)
 
 	def log(self, text):
 		"""
@@ -134,12 +115,11 @@ class SerialAgent:
 		"""
 		data = packet.split(',')
 
-		if data[0] == 'II':
+		if data[0] == 'II' and len(data[1]) > 0:
 			accel_raw = data[1:4]
 			gyro_raw = data[4:7]
 			mag_raw = data[7:]
 
-			
 			msg = Float64MultiArray()
 			msg.data = np.array(accel_raw, dtype=np.float64)
 			self.publishers['accel_raw'].publish(msg)
@@ -161,7 +141,7 @@ class SerialAgent:
 		"""
 		try:
 			while not rospy.is_shutdown():
-				if not self.connected:
+				if self.device is None:
 					self.tryConnect()
 
 				elif self.device.in_waiting:
