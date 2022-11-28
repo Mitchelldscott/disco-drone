@@ -9,6 +9,7 @@ figshow = 0;
 
 TS = 0.02; % 50 Hz
 wNyq = pi/TS;
+ref = [0; 0; 0; 0]; % Reference Input
 
 % syms theta phi psi
 phi = 0;
@@ -130,7 +131,7 @@ end
 
 %% Open Simulink
 % initial conditions for Simulink
-phi_init = 0.1;
+phi_init = 0.3;
 theta_init = 0;
 psi_init = 0;
 % 
