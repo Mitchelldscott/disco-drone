@@ -4,7 +4,7 @@ close all
 clear all
 
 fignum = 1;
-figshow = 0;
+figshow = 1;
 %% Parameters
 
 TS = 0.02; % 50 Hz
@@ -101,7 +101,7 @@ if(figshow)
 end
 
 epsilon = wn*TS/(2*pi)/10;
-p1 =  1-wn*TS/(2*pi) - epsilon;
+p1 =  1-wn*TS/(2*pi) - epsilon - 0.5;
 p2 = p1;
 
 wn1 = pi/(TS*sqrt(1-zeta^2));
@@ -131,9 +131,9 @@ end
 
 %% Open Simulink
 % initial conditions for Simulink
-phi_init = 0.3;
+phi_init = 0;
 theta_init = 0;
-psi_init = 0;
+psi_init = 0.3;
 % 
 % open_system('quadcopterR2.slx')
-open_system('quadcopterR2Feedback.slx')
+% open_system('quadcopterR2Feedback.slx')
