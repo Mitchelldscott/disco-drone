@@ -48,19 +48,19 @@ class SerialAgent:
 				self.device.close()
 
 			self.device = serial.Serial(f'/dev/ttyACM{self.port_num}', 1000000, timeout=10)
-			self.device.flush()
+			self.log('Device Connected: Reading...')
+
 
 		except Exception as e:
 			self.log(e)
-			self.log(f'No Device found at /dev/ttyACM{self.port_num}')
 			# ACM# likes to switch after reset, just check all of em (0..2)
 			self.port_num += 1
-			if self.port_num >= 3:
+			if self.port_num >= 5:
 				exit(0)
 
-			self.tryConnect()
+			time.sleep(2)
 
-		self.log('Device Connected: Reading...')
+			self.tryConnect()
 
 
 	def initPublishers(self):
@@ -76,7 +76,8 @@ class SerialAgent:
 		"""
 		  Write a message back to the arduino
 		"""
-		self.device.write(msg)
+		if not self.device is None:
+			self.device.write(msg)
 		
 
 	def writerCallback(self, msg):
@@ -84,8 +85,6 @@ class SerialAgent:
 		  Callback for writing messages to the arduino
 		  Ros message float 0-1, writer uses byte 0:255
 		"""
-		if self.device is None:
-			return 
 
 		# convert to uint16 then bytes
 		data = []
@@ -142,7 +141,8 @@ class SerialAgent:
 		try:
 			while not rospy.is_shutdown():
 				if self.device is None:
-					self.tryConnect()
+					self.device.open()
+
 
 				elif self.device.in_waiting:
 					packet = self.device.readline().decode().rstrip()
@@ -152,8 +152,7 @@ class SerialAgent:
 		except Exception as e:
 			traceback.print_exc()
 			self.log(e)
-			self.log('Possible I/O Error: Restarting...')
-			time.sleep(2)
+			time.sleep(1)
 			self.tryConnect()
 			self.spin()
 

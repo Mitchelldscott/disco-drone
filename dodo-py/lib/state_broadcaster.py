@@ -1,55 +1,32 @@
 #!/usr/bin/env python3
 
-import math
 import rospy
 import tf
-# because of transformations
 import numpy as np
 
 import tf2_ros
 import geometry_msgs.msg
 
-from ahrs.filters import Madgwick, Complementary, EKF
+from scipy import signal
+
+from ahrs.filters import Complementary
 from std_msgs.msg import String, Float64, Float64MultiArray
 from tf.transformations import euler_from_quaternion
 
 
-# def euler_from_quaternion(q):
-# 	"""
-# 	Convert a quaternion into euler angles (roll, pitch, yaw)
-# 	"""
-# 	q0, q1, q2, q3 = q
-	
-# 	roll = np.arctan(2 * ((q0*q1) + (q2*q3)) / (1 - (2 * (q1**2 + q2**2))))
-# 	pitch = np.arcsin(2 * ((q0*q2) - (q3*q1)))
-# 	yaw = np.arctan(2 * ((q0*q3) + (q1*q2)) / (1 - (2 * (q2**2 + q3**2))))
-
-# 	return np.array([roll, pitch, yaw]) 
-
-def omega_from_quaternions(q1, q2, dt):
-	"""
-	Convert a quaternion into euler angle rates (droll, dpitch, dyaw)
-	"""
-	rpy1 = np.array(euler_from_quaternion(q1))
-	# print(rpy1)
-	rpy2 = np.array(euler_from_quaternion(q2))
-
-	return (rpy1 - rpy2) / dt
-
-
 class IMU_Odometry():
 	def __init__(self):
-		self.sensor_flags = np.zeros(3)
 
-		self.madgwick = Madgwick(gain=0.45)
-		self.complementary = Complementary(gain=0.25)
-		self.ekf = EKF()
+		self.complementary = Complementary(gain=0.45)
 
 		self.sensor_mag = np.zeros(3)
 		self.sensor_gyro = np.zeros(3)
 		self.sensor_accel = np.zeros(3)
+		self.sensor_flags = np.zeros(3)
 
+		self.euler_angles = np.zeros(3)
 		self.omega = np.zeros(3)
+		self.omega_history = np.zeros((50,3))
 		self.quaternion = np.array([1.0, 0.0, 0.0, 0.0])
 		self.q_prop = np.array([1.0, 0.0, 0.0, 0.0])
 
@@ -59,7 +36,9 @@ class IMU_Odometry():
 		self.gyro_sub = rospy.Subscriber('/gyro_raw', Float64MultiArray, self.gyro_callback)
 		self.accel_sub = rospy.Subscriber('/accel_raw', Float64MultiArray, self.accel_callback)
 
-		self.euler_publisher = rospy.Publisher('/euler_angles', Float64MultiArray, queue_size=1)
+		self.state_publisher = rospy.Publisher('/state', Float64MultiArray, queue_size=1)
+		self.omega_publisher = rospy.Publisher('/omega_raw', Float64MultiArray, queue_size=1)
+
 
 		self.valid_bias = False
 		self.state_bias = np.zeros(3)
@@ -67,9 +46,11 @@ class IMU_Odometry():
 		rate = 384
 		self.dt = 1 / rate
 		self.rate = rospy.Rate(rate)
-		self.madgwick.Dt = 1 / rate
 		self.complementary.DT = 1 / rate
-		self.ekf.DT = 1 / rate
+
+		self.fc = 400  # Cut-off frequency of the filter
+		self.w = self.fc / (rate / 2) # Normalize the frequency
+		self.sos = signal.butter(2, self.w, btype='low', fs=rate, output='sos')
 
 
 	def mag_callback(self, msg):
@@ -100,23 +81,31 @@ class IMU_Odometry():
 		static_transformStamped.transform.rotation.z = self.quaternion[3]
 		self.broadcaster.sendTransform(static_transformStamped)
 
-	def broadcast_eulers(self):
+	def broadcast_state(self):
 		msg = Float64MultiArray()
-		msg.data = euler_from_quaternion(self.quaternion) - self.state_bias
-		self.euler_publisher.publish(msg)
+		theta, phi, psi = self.euler_angles
+		theta_dot, phi_dot, psi_dot = self.omega
+		msg.data = np.array([theta, theta_dot, phi, phi_dot, psi, psi_dot])
+		self.state_publisher.publish(msg)
+		msg.data = self.omega_history[-1]
+		self.omega_publisher.publish(msg)
 
+	def update_state(self, q):
+		euler_angles = (np.flip(euler_from_quaternion(q)) - self.state_bias)
+		if euler_angles[2] > np.pi:
+			euler_angles[2] -= 2 * np.pi
 
-	def madgwick_filter(self):		
-		self.quaternion = self.madgwick.updateMARG(self.quaternion, 
-													mag=self.sensor_mag,
-													gyr=self.sensor_gyro, 
-													acc=self.sensor_accel)
+		elif euler_angles[2] < -np.pi:
+			euler_angles[2] += 2 * np.pi
 
-	def ek_filter(self):		
-		self.quaternion = self.ekf.update(self.quaternion, 
-													mag=self.sensor_mag,
-													gyr=self.sensor_gyro, 
-													acc=self.sensor_accel)
+		self.omega_history[1:] = self.omega_history[0:-1]
+		self.omega_history[0] = (euler_angles - self.euler_angles) / self.dt
+		self.quaternion = q
+		self.euler_angles = euler_angles
+
+		self.omega[0] = signal.sosfilt(self.sos, self.omega_history[:,0])[-1]
+		self.omega[1] = signal.sosfilt(self.sos, self.omega_history[:,1])[-1]
+		self.omega[2] = signal.sosfilt(self.sos, self.omega_history[:,2])[-1]
 
 	def complementary_filter(self):
 		try:
@@ -125,38 +114,41 @@ class IMU_Odometry():
 													gyr=self.sensor_gyro, 
 													acc=self.sensor_accel)
 
-			self.omega = omega_from_quaternions(new_quaternion, self.quaternion, self.dt)
-			self.quaternion = new_quaternion
+			return new_quaternion
 
-		except ValueError:
-			print('bad value dropping accel/mag frame')
+		except ValueError as e:
+			print(e)
+			print('bad value dropping frame')
+			return self.quaternion
 
 
 	def spin(self):
 		bias_count = 0
+		bias = np.zeros(3)
 
 		while not rospy.is_shutdown():
 			if np.sum(self.sensor_flags) > 0:
 				self.sensor_flags *= 0
-				# self.ek_filter()
-				# self.madgwick_filter()
-				self.complementary_filter()
+				q = self.complementary_filter()
+				self.update_state(q)
 
 				if self.valid_bias:
-					self.broadcast_eulers()
+					self.broadcast_state()
+					self.broadcast_tf()
 
 				else:
-					self.state_bias += euler_from_quaternion(self.quaternion)
+					bias[2] += self.euler_angles[2]
 					bias_count += 1
 					if bias_count >= 50:
 						self.valid_bias = True
-						self.state_bias /= bias_count
+						self.state_bias = bias / bias_count
+						print(f'Euler angle Bias {self.state_bias}')
 				
 			self.rate.sleep()
 
 
 if __name__ == '__main__':
-	rospy.init_node('static_tf_broadcaster')
+	rospy.init_node('localization')
 	odom = IMU_Odometry()
 	odom.spin()
 	
