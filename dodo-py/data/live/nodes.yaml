@@ -1,18 +1,19 @@
-serial_layer:
-  files: [serial_layer.py, controller.py]
+dodo_codo:
+  files: [serial_layer.py, controller.py, state_broadcaster.py]
 
-static_tf_broadcaster:
-  files: [static_tf_broadcaster.py]
+plot_window:
+  files: [rqt_plot]
+  package: rqt_plot
 
-jsp:
-  files: [joint_state_publisher]
-  package: joint_state_publisher
-  args: [robot_description:=/dodo/robot_description]
+# jsp:
+#   files: [joint_state_publisher]
+#   package: joint_state_publisher
+#   args: [robot_description:=/dodo/robot_description]
 
-rsp:
-  files: [robot_state_publisher]
-  package: robot_state_publisher
-  args: [robot_description:=/dodo/robot_description]
+# rsp:
+#   files: [robot_state_publisher]
+#   package: robot_state_publisher
+#   args: [robot_description:=/dodo/robot_description]
 
 # viz:
 #   files: ['rviz']

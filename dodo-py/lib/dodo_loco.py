@@ -39,10 +39,10 @@ def omega_from_quaternions(q1, q2, dt):
 
 class IMU_Odometry():
 	def __init__(self):
-		self.sensor_flags = [0, 0, 0]
+		self.sensor_flags = np.zeros(3)
 
 		self.madgwick = Madgwick(gain=0.45)
-		self.complementary = Complementary(gain=0.45)
+		self.complementary = Complementary(gain=0.25)
 		self.ekf = EKF()
 
 		self.sensor_mag = np.zeros(3)
@@ -59,10 +59,12 @@ class IMU_Odometry():
 		self.gyro_sub = rospy.Subscriber('/gyro_raw', Float64MultiArray, self.gyro_callback)
 		self.accel_sub = rospy.Subscriber('/accel_raw', Float64MultiArray, self.accel_callback)
 
-		self.euler_publisher = rospy.Publisher('/euler_angles', Float64MultiArray, queue_size=1)
+		self.state_publisher = rospy.Publisher('/state', Float64MultiArray, queue_size=1)
 
+		self.valid_bias = False
+		self.state_bias = np.zeros(3)
 
-		rate = 100
+		rate = 384
 		self.dt = 1 / rate
 		self.rate = rospy.Rate(rate)
 		self.madgwick.Dt = 1 / rate
@@ -82,7 +84,7 @@ class IMU_Odometry():
 		self.sensor_flags[2] = 1
 		self.sensor_accel = np.array(msg.data) / 9.81
 
-	def broadcast_pose(self):
+	def broadcast_tf(self):
 		static_transformStamped = geometry_msgs.msg.TransformStamped()
 		static_transformStamped.header.frame_id = "map"
 		static_transformStamped.child_frame_id = "base_link1" 
@@ -98,24 +100,11 @@ class IMU_Odometry():
 		static_transformStamped.transform.rotation.z = self.quaternion[3]
 		self.broadcaster.sendTransform(static_transformStamped)
 
+	def broadcast_state(self):
 		msg = Float64MultiArray()
-		msg.data = euler_from_quaternion(self.quaternion)
-		self.euler_publisher.publish(msg)
+		msg.data = np.array(list(zip(self.euler_angles, self.omega))).reshape(6)
+		self.state_publisher.publish(msg)
 
-		# static_transformStamped = geometry_msgs.msg.TransformStamped()
-		# static_transformStamped.header.frame_id = "map"
-		# static_transformStamped.child_frame_id = "propagated_baselink1" 
-		# static_transformStamped.header.stamp = rospy.Time.now()
-			
-		# static_transformStamped.transform.translation.x = 0.0
-		# static_transformStamped.transform.translation.y = 0.0
-		# static_transformStamped.transform.translation.z = 0.0
-
-		# static_transformStamped.transform.rotation.w = self.q_prop[0]
-		# static_transformStamped.transform.rotation.x = self.q_prop[1]
-		# static_transformStamped.transform.rotation.y = self.q_prop[2]
-		# static_transformStamped.transform.rotation.z = self.q_prop[3]
-		# self.broadcaster.sendTransform(static_transformStamped)
 
 	def madgwick_filter(self):		
 		self.quaternion = self.madgwick.updateMARG(self.quaternion, 
@@ -136,39 +125,39 @@ class IMU_Odometry():
 													gyr=self.sensor_gyro, 
 													acc=self.sensor_accel)
 
-			self.omega = omega_from_quaternions(new_quaternion, self.quaternion, self.dt)
+			euler_angles = euler_from_quaternion(new_quaternion).flip() - self.state_bias
+			self.omega = (euler_angles - self.euler_angles) / self.dt
 			self.quaternion = new_quaternion
+			self.euler_angles = euler_angles
+
 
 		except ValueError:
-			print('bad value reseting accel/mag')
-
-
-		# self.quaternion = new_quaternion  #+ (0.25 * self.q_prop)
-		# # self.quaternion /= np.linalg.norm(self.quaternion)
-		#self.omega = (0.2 * self.omega) + (0.8 * omega)
-		#quaternion = self.complementary.attitude_propagation(new_quaternion, self.omega)
-
-		# if len([math.isnan(q) for q in quaternion]) != 0:
-		# 	self.quaternion = new_quaternion
-
-		# else:
-		# 	self.quaternion = quaternion
+			print('bad value dropping accel/mag frame')
 
 
 	def spin(self):
+		bias_count = 0
+
 		while not rospy.is_shutdown():
-			if self.sensor_flags[0] or self.sensor_flags[1] or self.sensor_flags[2]:
-				# self.ek_filter()
+			if np.sum(self.sensor_flags) > 0:
+				self.sensor_flags *= 0
 				self.complementary_filter()
 
-				self.broadcast_pose()
-				# self.madgwick_filter()
+				if self.valid_bias:
+					self.broadcast_state()
+
+				else:
+					self.state_bias += self.euler_angles
+					bias_count += 1
+					if bias_count >= 50:
+						self.valid_bias = True
+						self.state_bias /= bias_count
 				
 			self.rate.sleep()
 
 
 if __name__ == '__main__':
-	rospy.init_node('static_tf_broadcaster')
+	rospy.init_node('localization')
 	odom = IMU_Odometry()
 	odom.spin()
 	

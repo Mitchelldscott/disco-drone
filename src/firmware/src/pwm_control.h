@@ -18,7 +18,6 @@ class PWM_Controller{
 
 	private:
 		int pins[4];
-
 };
 
 #endif

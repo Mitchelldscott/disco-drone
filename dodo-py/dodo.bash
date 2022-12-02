@@ -4,7 +4,7 @@
 export PROJECT_ROOT=${PWD}
 export HOSTNAME=$HOSTNAME 
 export SUDO='sudo'
-export ROBOT_IP=192.168.1.106
+export ROBOT_IP=10.0.0.56
 
 if [[ "${UBUNTU_VERSION}" == "20.04" ]]; then
 	export ROS_DISTRO=noetic				# ROS for Ubuntu18

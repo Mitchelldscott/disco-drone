@@ -4,19 +4,19 @@
 #include "imu_9dof.h"
 #include "pwm_control.h"
 
-#define MOTOR_1 12
-#define MOTOR_2 11
+#define MOTOR_1 9
+#define MOTOR_2 12
 #define MOTOR_3 10
-#define MOTOR_4 9
+#define MOTOR_4 11
 
 unsigned long top_time;
 unsigned long serial_time;
-unsigned long cycle_rate = 3000;
-unsigned long serial_rate = 100;
+unsigned long cycle_rate = 2632;
+unsigned long serial_rate = 5000;
 
 COMMS comms;
 IMU_9DOF imu;
-PWM_Controller pwm(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 12, 500);
+PWM_Controller pwm(MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, 15, 500);
 
 void set_pwm_signal() {
 	pwm.updateIO();
@@ -75,30 +75,33 @@ void setup(){
 void loop(){
 	if (!Serial){
 		pwm.disable();
-		while(!Serial);
 	}
+	else {
+		top_time = micros();
 
-	top_time = micros();
+		blink();
 
-	blink();
+		read_lis3mdl();
+		read_lsm6dsox_gyro();
+		read_lsm6dsox_accel();
 
-	read_lis3mdl();
-	read_lsm6dsox_gyro();
-	read_lsm6dsox_accel();
-
-	set_pwm_signal();
-
-	if (millis() - serial_time > serial_rate) {
 		comms.send_floats("II", imu.data, 9);
-		read_serial();
-		pwm.pretty_print();
-		serial_time = millis();
-	}
-	
-	if (micros() - top_time > cycle_rate) {
-		Serial.print("Overtime ");
-		Serial.println(micros() - top_time);
-	}
 
-	while (micros() - top_time < cycle_rate){}
+		read_serial();
+
+		set_pwm_signal();
+
+		// if (micros() - serial_time > serial_rate) {
+		// 	read_serial();
+		// 	// pwm.pretty_print();
+		// 	serial_time = millis();
+		// }
+		
+		if (micros() - top_time > cycle_rate) {
+			Serial.print("Overtime ");
+			Serial.println(micros() - top_time);
+		}
+
+		while (micros() - top_time < cycle_rate){}
+	}
 }
