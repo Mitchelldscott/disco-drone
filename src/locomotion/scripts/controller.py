@@ -23,7 +23,7 @@ class Kwad_Controller():
 
 		self.euler_history = np.zeros((5,3))
 
-		rate = 384
+		rate = 60
 		self.dt = 1 / rate
 		self.rate = rospy.Rate(rate)
 
@@ -45,7 +45,7 @@ class Kwad_Controller():
 			if self.update_timer < 2:
 
 				s_control = [0, 0, 0, 0]
-				if ctr > 400:
+				if ctr >  1 / self.dt:
 					if abs(self.state[0]) < 0.15:
 						s_control = np.array([[   0.0,   0.0,  0.0,   0.0,  -0.0,  -0.0],
 											  [   0.0,   2e-1,   0.0,   0.0,   0.0,   0.0],
@@ -63,7 +63,7 @@ class Kwad_Controller():
 											  [   0.0,   0.0, -0.0,  -0.0,  -0.0,  -0.0],
 											  [  -0.3,  -0.0,   0.0,   0.0,   0.0,   0.0]]) @ self.state
 
-				if ctr == 1000:
+				if ctr == 1.5 / self.dt:
 					throttle = 0
 
 				control = []

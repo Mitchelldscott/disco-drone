@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import math
 import rospy
 import tf
 import numpy as np
@@ -39,19 +40,17 @@ class IMU_Odometry():
 		self.state_publisher = rospy.Publisher('/state', Float64MultiArray, queue_size=1)
 		self.omega_publisher = rospy.Publisher('/omega_raw', Float64MultiArray, queue_size=1)
 
-
 		self.valid_bias = False
-		self.state_bias = np.zeros(3)
+		self.state_bias = np.zeros(6)
 
 		rate = 384
 		self.dt = 1 / rate
 		self.rate = rospy.Rate(rate)
 		self.complementary.DT = 1 / rate
 
-		self.fc = 400  # Cut-off frequency of the filter
+		self.fc = 600  # Cut-off frequency of the filter
 		self.w = self.fc / (rate / 2) # Normalize the frequency
 		self.sos = signal.butter(2, self.w, btype='low', fs=rate, output='sos')
-
 
 	def mag_callback(self, msg):
 		self.sensor_flags[0] = 1
@@ -59,7 +58,7 @@ class IMU_Odometry():
 	
 	def gyro_callback(self, msg):
 		self.sensor_flags[1] = 1
-		self.sensor_gyro = np.array(msg.data) * np.pi / 180.0
+		self.sensor_gyro = np.array(msg.data) #* np.pi / 180.0
 	
 	def accel_callback(self, msg):
 		self.sensor_flags[2] = 1
@@ -85,27 +84,29 @@ class IMU_Odometry():
 		msg = Float64MultiArray()
 		theta, phi, psi = self.euler_angles
 		theta_dot, phi_dot, psi_dot = self.omega
+
 		msg.data = np.array([theta, theta_dot, phi, phi_dot, psi, psi_dot])
 		self.state_publisher.publish(msg)
+		
 		msg.data = self.omega_history[-1]
 		self.omega_publisher.publish(msg)
 
 	def update_state(self, q):
-		euler_angles = (np.flip(euler_from_quaternion(q)) - self.state_bias)
+		euler_angles = (np.flip(euler_from_quaternion(q)) - self.state_bias[::2])
 		if euler_angles[2] > np.pi:
 			euler_angles[2] -= 2 * np.pi
 
 		elif euler_angles[2] < -np.pi:
 			euler_angles[2] += 2 * np.pi
 
-		self.omega_history[1:] = self.omega_history[0:-1]
-		self.omega_history[0] = (euler_angles - self.euler_angles) / self.dt
+		self.omega_history[:-1] = self.omega_history[1:]
+		self.omega_history[-1] = self.sensor_gyro - self.state_bias[1::2]
 		self.quaternion = q
 		self.euler_angles = euler_angles
 
-		self.omega[0] = signal.sosfilt(self.sos, self.omega_history[:,0])[-1]
-		self.omega[1] = signal.sosfilt(self.sos, self.omega_history[:,1])[-1]
-		self.omega[2] = signal.sosfilt(self.sos, self.omega_history[:,2])[-1]
+		self.omega[0] = signal.sosfilt(self.sos, self.omega_history[:,0])[-1] #self.sensor_gyro[0] - self.state_bias[1]#
+		self.omega[1] = signal.sosfilt(self.sos, self.omega_history[:,1])[-1] #self.sensor_gyro[1] - self.state_bias[3]#
+		self.omega[2] = signal.sosfilt(self.sos, self.omega_history[:,2])[-1] #self.sensor_gyro[2] - self.state_bias[5]#
 
 	def complementary_filter(self):
 		try:
@@ -124,7 +125,7 @@ class IMU_Odometry():
 
 	def spin(self):
 		bias_count = 0
-		bias = np.zeros(3)
+		bias = np.zeros(6)
 
 		while not rospy.is_shutdown():
 			if np.sum(self.sensor_flags) > 0:
@@ -136,8 +137,8 @@ class IMU_Odometry():
 					self.broadcast_state()
 					self.broadcast_tf()
 
-				else:
-					bias[2] += self.euler_angles[2]
+				elif not math.isnan(self.euler_angles[2]):
+					bias += np.array([0, self.sensor_gyro[0], 0, self.sensor_gyro[1], self.euler_angles[2], self.sensor_gyro[2]])
 					bias_count += 1
 					if bias_count >= 50:
 						self.valid_bias = True
