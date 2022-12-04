@@ -4,7 +4,7 @@ close all
 clear all
 
 fignum = 1;
-figshow = 1;
+figshow = 0;
 %% Parameters
 
 TS = 0.02; % 50 Hz
@@ -60,6 +60,8 @@ Bz = sys_z.B;
 Cz = sys_z.C;
 Dz = sys_z.D;
 
+Cc = ctrb(sys_z);
+assert(rank(Cc)==6);
 %% Pole currently
 
 [b1,a1] = ss2tf(Az,Bz,Cz,Dz,1);
@@ -117,6 +119,7 @@ p6 = -xncross+40*epsilon;
 
 p = [p1,p2,p3,p4,p5,p6];
 K = place(Az,Bz,p);
+Ks = K*1e-6*2*pi;
 disp('Feedback gain, K: '); disp(K);
 
 z = tf('z',TS);
@@ -129,11 +132,24 @@ if(figshow)
     zgrid();
 end
 
+%% lqr attempt
+Q = [10 0 0 0 0 0;...
+    0 100 0 0 0 0;...
+    0 0 10 0 0 0;...
+    0 0 0 100 0 0;...
+    0 0 0 0 10 0;...
+    0 0 0 0 0 100];
+R = [1 0 0 0;...
+    0 1 0 0;...
+    0 0 1 0;...
+    0 0 0 1];
+[Kd,s,e] = dlqr(Az,Bz,Q,R);
+Kds = 0.01*Kd;
 %% Open Simulink
 % initial conditions for Simulink
 phi_init = 0;
 theta_init = 0;
-psi_init = 0.3;
+psi_init = 0.6;
 % 
 % open_system('quadcopterR2.slx')
-% open_system('quadcopterR2Feedback.slx')
+open_system('quadcopterR2Feedback.slx')
